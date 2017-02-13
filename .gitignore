@@ -1,0 +1,8 @@
+# idea
+.idea
+*.xml
+
+# DataSet
+*.gz
+*.tar
+*.csv

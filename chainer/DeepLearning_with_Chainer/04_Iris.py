@@ -43,7 +43,6 @@ d = d.astype(np.float32)
 # data -> train & test
 x_train = data_x[::2]
 y_train = data_y[::2]   # one-hot
-# y_train = d[::2]  # single-value
 
 x_test = data_x[1::2]
 y_test = data_y[1::2]
@@ -70,7 +69,6 @@ class IrisChain(Chain):
         return h2
 
 
-# don't use one-hot array
 class IrisChainSofmax(Chain):
     def __init__(self):
         super(IrisChainSofmax, self).__init__(

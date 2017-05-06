@@ -45,14 +45,14 @@ class MyRNN(Chain):
             W=L.Linear(k, v)
         )
 
-    def __call__(self, paragraph):
+    def __call__(self, s):
         accum_loss = None
         v, k = self.embed.W.data.shape
         h = Variable(xp.zeros((1, k), dtype=np.float32))
-        for i in range(len(paragraph)):
-            next_word_id = eos_id if (i == len(paragraph) - 1) else paragraph[i+1]
+        for i in range(len(s)):
+            next_word_id = eos_id if (i == len(s) - 1) else s[i+1]
             tx = Variable(xp.array([next_word_id], dtype=np.int32))
-            x_k = self.embed(Variable(xp.array([paragraph[i]], dtype=np.int32)))
+            x_k = self.embed(Variable(xp.array([s[i]], dtype=np.int32)))
             h = F.tanh(x_k + self.H(h))
             loss = F.softmax_cross_entropy(self.W(h), tx)
             accum_loss = loss if accum_loss is None else accum_loss + loss
@@ -98,14 +98,15 @@ logging.info('Training start')
 for epoch in range(5):
     logging.info('Gpoch %d' % epoch)
     s = []
-    for i in range(len(train_data)):
-        if i % 2000 == 0:
-            logging.debug('word %d' % i)
+    num_words = len(train_data)
+    for i in range(num_words):
+        if i % 10000 == 0:
+            logging.debug('word %d / %d' % (i, num_words))
         id_ = train_data[i]
         s.append(id_)
-        if (id_ == eos_id):
+        if id_ == eos_id:
             model.cleargrads()
-            loss = model(s)
+            loss = model(np.array(s))
             loss.backward()
             optimizer.update()
             s = []
@@ -114,8 +115,8 @@ for epoch in range(5):
 logging.info('Training finished')
 
 # eval
-nu = model.output(['He', 'is', 'a', 'new'])
-nu_1 = int(nu) - 1
-nu0 = int(nu)
-nu2 = int(nu) + 1
-print(vocab[nu_1], vocab[nu0], vocab[nu2])
+# nu = model.output(['He', 'is', 'a', 'new'])
+# nu_1 = int(nu) - 1
+# nu0 = int(nu)
+# nu2 = int(nu) + 1
+# print(vocab[nu_1], vocab[nu0], vocab[nu2])

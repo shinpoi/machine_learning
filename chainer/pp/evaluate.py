@@ -40,6 +40,7 @@ yp = yv.data[0, :, 0, :]  # (1,7,1,long) -> (7,long)
 print('yp:', yp[1, :])
 
 # evaluate
+"""
 for i in range(len(yp)):
     plt.figure(i, figsize=(4, 3))
     plt.plot(range(len(yt)), yt[:, i], label="True data | p" + str(i), color="blue", linewidth=1)
@@ -48,5 +49,17 @@ for i in range(len(yp)):
     plt.xlabel("times")
     plt.ylabel("angle")
     plt.legend()
+"""
 
+plt.figure(1, figsize=(16, 9))
+plt.plot(range(len(yt)), yt[:, 1] - yp[1, :], label="error p1", color="red", linewidth=1)
+plt.plot(range(len(yt)), yt[:, 2] - yp[2, :], label="error p2", color="blue", linewidth=1)
+plt.plot(range(len(yt)), yt[:, 3] - yp[3, :], label="error p3", color="green", linewidth=1)
+plt.plot(range(len(yt)), yt[:, 4] - yp[4, :], label="error p4", color="gray", linewidth=1)
+plt.plot(range(len(yt)), yt[:, 5] - yp[5, :], label="error p5", color="yellow", linewidth=1)
+plt.plot(range(len(yt)), yt[:, 6] - yp[6, :], label="error p5", color="black", linewidth=1)
+plt.title("data-p")
+plt.xlabel("times")
+plt.ylabel("angle")
+plt.legend()
 plt.show()

@@ -28,7 +28,7 @@ class Generator(Chain):
         )
 
     def __call__(self, x):
-        h = F.reshape(F.relu(self.bn0l(self.l0z(x))), (batch_num, 1024, 6, 6))
+        h = F.reshape(F.relu(self.bn0l(self.l0z(x))), (x.shape[0], 1024, 6, 6))
         h = F.relu(self.bn1(self.dc1(h)))
         h = F.relu(self.bn2(self.dc2(h)))
         h = F.relu(self.bn3(self.dc3(h)))
@@ -54,7 +54,7 @@ class Discriminator(Chain):
         )
 
     def __call__(self, x):
-        h = F.relu(self.bn0(self.c0(x)))  # no bn because images from generator will katayotteru?
+        h = F.relu(self.bn0(self.c0(x)))
         h = F.relu(self.bn1(self.c1(h)))
         h = F.relu(self.bn2(self.c2(h)))
         h = F.relu(self.bn3(self.c3(h)))

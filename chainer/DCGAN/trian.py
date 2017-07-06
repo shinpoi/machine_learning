@@ -2,7 +2,7 @@
 # python 3.4+
 
 import numpy as np
-from chainer import using_config, no_backprop_mode, Variable, optimizers, optimizer, serializers, cuda
+from chainer import Variable, optimizers, optimizer, serializers, cuda
 import chainer.functions as F
 import logging
 import setting

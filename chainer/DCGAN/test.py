@@ -17,11 +17,11 @@ generator = model.Generator()
 serializers.load_npz('model_gen.npz', generator)
 
 logging.info('generate images...')
-x = np.random.uniform(-1, 1, (test_num, input_num))
+x = np.random.uniform(0, 1, (test_num, input_num))
 with no_backprop_mode():
     x = Variable(np.array(x, dtype=np.float32))
     with using_config('train', False):
-        imgs = np.array(generator(x).data)*50
+        imgs = (np.array(generator(x).data)+2) * 20
 
 logging.info('save images...')
 for i in range(test_num):

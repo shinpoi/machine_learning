@@ -7,6 +7,8 @@ import os
 import setting
 import logging
 
+batch_size = setting.BATCH
+
 
 def cut(img, size):
     h = img.shape[0]
@@ -23,7 +25,9 @@ def get_image_list(dir):
     for file in file_list:
         if file.endswith(('jpg', 'jpeg', 'bmp', 'png', 'JPG', 'JPEG', 'BMP', 'PNG')):
             img_list.append(file)
-    return img_list
+    n = len(img_list)
+    n -= n % batch_size
+    return img_list[:n]
 
 
 def create_data_set(dir, size):

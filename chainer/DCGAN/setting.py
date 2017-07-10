@@ -5,17 +5,15 @@ import logging
 import time
 import os
 
-
-RAND_IN_NUM = 200   # 100?
-
 GPU = True
-ADAM_RATE = 0.0002
+ADAM_RATE = 0.00001
 # WeightDecay = 0.00001
-WeightDecay = None
+WeightDecay = True
 SAVE_MODEL = True
 
-EPOCH = 100
-BATCH = 50
+RAND_IN_NUM = 100
+EPOCH = 200
+BATCH = 100
 
 IMG_SIZE = 192
 DATA_DIR = './data/'

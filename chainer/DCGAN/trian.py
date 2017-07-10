@@ -16,8 +16,10 @@ logging.info("start import dataset...")
 batch_num = setting.BATCH
 input_num = setting.RAND_IN_NUM
 
-data_set = np.array(np.load('dataset.npy'), dtype=np.float32)
+data_set = np.array(np.load('./CIFAR-10/CIFAR-10.npy'), dtype=np.float32)
+data_set = (data_set - 128.0)/128.0
 n = len(data_set)
+logging.info("get %d true data for training..." % n)
 
 ##################
 # set model
@@ -55,10 +57,16 @@ logging.info("start training ...")
 for epoch in range(setting.EPOCH):
     logging.debug('start epoch: %d' % epoch)
     shuffle_index = np.random.permutation(n)
+
+    if epoch % 5 == 0:
+        tp = tn = 0
+
     # for every batch:
     for start in range(0, n, batch_num):
+        """
         if (start + batch_num) > n:
             continue
+        """
 
         x = xp.random.uniform(-1, 1, (batch_num, input_num))
         x = Variable(xp.array(x, dtype=np.float32))
@@ -70,6 +78,19 @@ for epoch in range(setting.EPOCH):
 
         y_gen = dis(t_gen)
         y_true = dis(t_true)
+
+        # evaluate
+        if epoch % 5 == 0:
+            d_true = y_true.data
+            d_gen = y_gen.data
+            for i in range(batch_num):
+                # print(d_true[i])
+                if d_true[i][1] > d_true[i][0]:
+                    tp += 1
+                # tp += d_true[i].argmax()
+                # print(d_gen[i])
+                if d_gen[i][0] > d_gen[i][1]:
+                    tn += 1
 
         loss_gen = F.softmax_cross_entropy(y_gen, Variable(xp.ones(batch_num, dtype=np.int32)))
         loss_dis = F.softmax_cross_entropy(y_gen, Variable(xp.zeros(batch_num, dtype=np.int32)))
@@ -83,11 +104,13 @@ for epoch in range(setting.EPOCH):
         loss_dis.backward()
         opt_dis.update()
 
-        logging.debug("loss of generator: %s" % str(loss_gen))
-        logging.debug("loss of discriminator: %s" % str(loss_dis))
+    logging.debug("loss of generator: %s" % str(loss_gen))
+    logging.debug("loss of discriminator: %s" % str(loss_dis))
 
     # evaluate
-        # pass
+    if epoch % 5 == 0:
+        logging.info("true positives: %d/%d = %f" % (tp, n, tp/float(n)))
+        logging.info("true negatives: %d/%d = %f" % (tn, n, tn/float(n)))
 
 logging.info("end training !")
 

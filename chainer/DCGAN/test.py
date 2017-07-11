@@ -10,14 +10,43 @@ import cv2
 
 input_num = setting.RAND_IN_NUM
 size = setting.IMG_SIZE
-test_num = 20
+interval = 10
+# test_num = 20
+channel = 1
 
 logging.info('load model...')
-generator = model.Generator()
-serializers.load_npz('model_gen.npz', generator)
+generator = model.GeneratorMnist()
+serializers.load_npz('model_gen_3x100.npz', generator)
 
+
+# flatten histogram
+def hist_flatten(src):
+    shape = src.shape
+    img_new = np.array(src).reshape((-1,))
+    hist = cv2.calcHist((img_new,), (0,), None, (256,), (0, 256))
+    n = float(len(img_new))
+
+    # normalize
+    for i in range(len(hist)):
+        hist[i] /= n
+
+    # accumulate
+    hist_sum = np.zeros(len(hist))
+    for i in range(len(hist)):
+        hist_sum[i] = sum(hist[:i])
+
+    # flatten
+    for i in range(len(img_new)):
+        img_new[i] = 255 * hist_sum[img_new[i]]
+    return img_new.resize(shape)
+
+
+def clip_img(x):
+    return np.float32(-1 if x < -1 else (1 if x > 1 else x))
+
+"""
 logging.info('generate images...')
-x = np.random.uniform(0, 1, (test_num, input_num))
+x = np.random.uniform(-1, 1, (test_num, input_num))
 with no_backprop_mode():
     x = Variable(np.array(x, dtype=np.float32))
     with using_config('train', False):
@@ -26,12 +55,31 @@ with no_backprop_mode():
 logging.info('save images...')
 for i in range(test_num):
     logging.debug("save image: %d/%d" % (i, test_num))
-    img = np.zeros((size, size, 3), dtype=np.uint8)
+    img = np.zeros((size, size, channel), dtype=np.uint8)
     img_ = imgs[i, ]
-    for c in range(3):
+    for c in range(channel):
         img[:, :, c] = np.array(img_[c, ], dtype=np.uint8)
 
     cv2.imwrite("gen_" + str(i) + '.jpg', img)
+"""
+
+logging.info('generate images (big)...')
+img = np.zeros((size*8 + interval*9, size*8 + interval*9, channel), dtype=np.uint8)
+x = np.random.uniform(-1, 1, (64, input_num))
+with no_backprop_mode():
+    x = Variable(np.array(x, dtype=np.float32))
+    with using_config('train', False):
+        imgs = np.array(generator(x).data)
+
+counter = 0
+for row in range(8):
+    for col in range(8):
+        img[row*size+(row+1)*interval:(row+1)*size+(row+1)*interval,
+            col*size+(col+1)*interval:(col+1)*size+(col+1)*interval, ] = \
+            ((np.vectorize(clip_img)(imgs[counter, ])+1)/2).transpose(1, 2, 0)*255
+
+cv2.imwrite("gen_x64.jpg", img)
+logging.info('save images (big)...')
 
 logging.info('finished !')
 

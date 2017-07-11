@@ -6,20 +6,20 @@ import time
 import os
 
 GPU = True
-ADAM_RATE = 0.00001
-# WeightDecay = 0.00001
-WeightDecay = True
+ADAM_RATE = 0.0002
+# WeightDecay = None
+WeightDecay = 0.00001
 SAVE_MODEL = True
 
 RAND_IN_NUM = 100
-EPOCH = 200
-BATCH = 100
+EPOCH = 2000
+BATCH = 50
 
-IMG_SIZE = 192
+IMG_SIZE = 28
 DATA_DIR = './data/'
-LOG_LEVEL = logging.DEBUG
 LOG_DIR = './log/'
 LOG_NAME = LOG_DIR + 'log_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.log'
+LOG_LEVEL = logging.DEBUG
 
 ##################################################
 # logging setting

@@ -5,3 +5,7 @@ log
 *.npy
 *.npz
 
+# images
+*.jpg
+*.png
+*.gif

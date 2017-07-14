@@ -105,12 +105,13 @@ class Discriminator(Chain):
         return h
 """
 
-"""
+
+#################################################################
 # CIFAR-10
-class Generator(Chain):
+class GeneratorCIFAR(Chain):
 
     def __init__(self):
-        super(Generator, self).__init__(
+        super(GeneratorCIFAR, self).__init__(
             l0z=L.Linear(input_num, 2 * 2 * 512),
             dc1=L.Deconvolution2D(512, 256, 4, stride=2, pad=1),  # 4x4x256
             dc2=L.Deconvolution2D(256, 128, 4, stride=2, pad=1),  # 8x8x128
@@ -132,9 +133,9 @@ class Generator(Chain):
         return h
 
 
-class Discriminator(Chain):
+class DiscriminatorCIFAR(Chain):
     def __init__(self):
-        super(Discriminator, self).__init__(
+        super(DiscriminatorCIFAR, self).__init__(
             c0=L.Convolution2D(3, 64, 4, stride=2, pad=1),  # 16x16x64
             c1=L.Convolution2D(64, 128, 4, stride=2, pad=1),  # 8x8x128
             c2=L.Convolution2D(128, 256, 4, stride=2, pad=1),  # 4x4x256
@@ -153,16 +154,17 @@ class Discriminator(Chain):
         h = F.relu(self.bn3(self.c3(h)))
         h = self.l4l(h)
         return h
-"""
 
 
+#################################################################
+# Mnist
 class GeneratorMnist(Chain):
     def __init__(self):
         super(GeneratorMnist, self).__init__(
-            l0z=L.Linear(input_num, 4 * 4 * 256),
-            dc1=L.Deconvolution2D(256, 128, 3, stride=2, pad=1),  # 7x7x256
-            dc2=L.Deconvolution2D(128, 64, 4, stride=2, pad=1),  # 14x14x128
-            dc3=L.Deconvolution2D(64, 1, 4, stride=2, pad=1),  # 28x28x1
+            l0z=L.Linear(input_num, 4 * 4 * 256, nobias=True),
+            dc1=L.Deconvolution2D(256, 128, 3, stride=2, pad=1, nobias=True),  # 7x7x256
+            dc2=L.Deconvolution2D(128, 64, 4, stride=2, pad=1, nobias=True),  # 14x14x128
+            dc3=L.Deconvolution2D(64, 1, 4, stride=2, pad=1, nobias=True),  # 28x28x1
             bn0l=L.BatchNormalization(4 * 4 * 256),
             bn0=L.BatchNormalization(256),
             bn1=L.BatchNormalization(128),
@@ -170,9 +172,9 @@ class GeneratorMnist(Chain):
         )
 
     def __call__(self, x):
-        h = F.reshape(F.relu(self.bn0l(self.l0z(x))), (x.shape[0], 256, 4, 4))
-        h = F.relu(self.bn1(self.dc1(h)))
-        h = F.relu(self.bn2(self.dc2(h)))
+        h = F.reshape(F.leaky_relu(self.bn0l(self.l0z(x))), (x.shape[0], 256, 4, 4))
+        h = F.leaky_relu(self.bn1(self.dc1(h)))
+        h = F.leaky_relu(self.bn2(self.dc2(h)))
         h = self.dc3(h)
         return h
 
@@ -184,13 +186,14 @@ class DiscriminatorMnist(Chain):
             c1=L.Convolution2D(64, 128, 4, stride=2, pad=1),  # 7x7x128
             c2=L.Convolution2D(128, 256, 3, stride=2, pad=1),  # 4x4x256
             l4l=L.Linear(4 * 4 * 256, 2),
+            bn1=L.BatchNormalization(64),
             bn2=L.BatchNormalization(128),
             bn3=L.BatchNormalization(256),
         )
 
     def __call__(self, x):
-        h = F.relu(self.c0(x))
-        h = F.relu(self.bn2(self.c1(h)))
-        h = F.relu(self.bn3(self.c2(h)))
+        h = F.elu(self.bn1(self.c0(x)))
+        h = F.elu(self.bn2(self.c1(h)))
+        h = F.elu(self.bn3(self.c2(h)))
         h = self.l4l(h)
         return h

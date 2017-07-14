@@ -7,16 +7,21 @@ import chainer.functions as F
 import logging
 import setting
 import model
+import time
 
 
 ##################
+log_name = setting.LOG_DIR + 'train_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.log'
+logging.basicConfig(filename=log_name)
+
 #  import true image set (192x192)
 logging.info("start import dataset...")
 
 batch_num = setting.BATCH
 input_num = setting.RAND_IN_NUM
 
-data_set = np.array(np.load('mnist.npy'), dtype=np.float32)
+data_set = np.array(np.load('./CIFAR-10/CIFAR-10.npy'), dtype=np.float32)
+data_set /= 255.0
 n = len(data_set)
 logging.info("get %d true data for training..." % n)
 
@@ -26,8 +31,8 @@ logging.info("get %d true data for training..." % n)
 # load model
 logging.info("start load model...")
 
-gen = model.GeneratorMnist()
-dis = model.DiscriminatorMnist()
+gen = model.GeneratorCIFAR()
+dis = model.DiscriminatorCIFAR()
 
 opt_gen = optimizers.Adam(alpha=setting.ADAM_RATE)
 opt_gen.setup(gen)
@@ -113,8 +118,8 @@ for epoch in range(setting.EPOCH):
 
     # evaluate
     if epoch % 5 == 0:
-        logging.info("true positives: %d/%d = %f" % (tp, n, tp/float(n)))
-        logging.info("true negatives: %d/%d = %f" % (tn, n, tn/float(n)))
+        logging.info("acc of dis-true: %d/%d = %f" % (tp, n, tp/float(n)))
+        logging.info("acc of dis-fake: %d/%d = %f" % (tn, n, tn/float(n)))
 
     # middle save
     if setting.SAVE_MODEL:

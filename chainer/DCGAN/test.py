@@ -12,11 +12,11 @@ input_num = setting.RAND_IN_NUM
 size = setting.IMG_SIZE
 interval = 10
 # test_num = 20
-channel = 1
+channel = 3
 
 logging.info('load model...')
-generator = model.GeneratorMnist()
-serializers.load_npz('model_gen_3x100.npz', generator)
+generator = model.GeneratorCIFAR()
+# serializers.load_npz('model_gen_6x100.npz', generator)
 
 
 # flatten histogram
@@ -42,7 +42,7 @@ def hist_flatten(src):
 
 
 def clip_img(x):
-    return np.float32(-1 if x < -1 else (1 if x > 1 else x))
+    return np.float32(0 if x < 0 else (1 if x > 1 else x))
 
 """
 logging.info('generate images...')
@@ -62,24 +62,25 @@ for i in range(test_num):
 
     cv2.imwrite("gen_" + str(i) + '.jpg', img)
 """
-
-logging.info('generate images (big)...')
-img = np.zeros((size*8 + interval*9, size*8 + interval*9, channel), dtype=np.uint8)
 x = np.random.uniform(-1, 1, (64, input_num))
-with no_backprop_mode():
-    x = Variable(np.array(x, dtype=np.float32))
+x = Variable(np.array(x, dtype=np.float32))
+for i in range(7):
+    serializers.load_npz('model_gen_%dx100.npz' % i, generator)
+    logging.info('generate images (big)...')
+    img = np.zeros((size*8 + interval*9, size*8 + interval*9, channel), dtype=np.uint8)
     with using_config('train', False):
         imgs = np.array(generator(x).data)
 
-counter = 0
-for row in range(8):
-    for col in range(8):
-        img[row*size+(row+1)*interval:(row+1)*size+(row+1)*interval,
-            col*size+(col+1)*interval:(col+1)*size+(col+1)*interval, ] = \
-            ((np.vectorize(clip_img)(imgs[counter, ])+1)/2).transpose(1, 2, 0)*255
+    counter = 0
+    for row in range(8):
+        for col in range(8):
+            img[row*size+(row+1)*interval:(row+1)*size+(row+1)*interval,
+                col*size+(col+1)*interval:(col+1)*size+(col+1)*interval, ] = \
+                np.vectorize(clip_img)(imgs[counter, ]).transpose(1, 2, 0)*255
+            counter += 1
 
-cv2.imwrite("gen_x64.jpg", img)
-logging.info('save images (big)...')
+    cv2.imwrite("gen_%dx64.jpg" % i, img)
+    logging.info('save images (big)...')
 
-logging.info('finished !')
+    logging.info('finished !')
 

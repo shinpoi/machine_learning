@@ -15,7 +15,7 @@ interval = 10
 channel = 3
 
 logging.info('load model...')
-generator = model.GeneratorCIFAR()
+generator = model.GeneratorFace()
 # serializers.load_npz('model_gen_6x100.npz', generator)
 
 
@@ -62,10 +62,10 @@ for i in range(test_num):
 
     cv2.imwrite("gen_" + str(i) + '.jpg', img)
 """
-x = np.random.uniform(-1, 1, (64, input_num))
+x = np.random.uniform(0, 1, (64, input_num))
 x = Variable(np.array(x, dtype=np.float32))
 for i in range(7):
-    serializers.load_npz('model_gen_%dx100.npz' % i, generator)
+    serializers.load_npz('./model_gen_%dx50.npz' % i, generator)
     logging.info('generate images (big)...')
     img = np.zeros((size*8 + interval*9, size*8 + interval*9, channel), dtype=np.uint8)
     with using_config('train', False):
@@ -74,9 +74,12 @@ for i in range(7):
     counter = 0
     for row in range(8):
         for col in range(8):
+            t = (np.vectorize(clip_img)(imgs[counter, ]).transpose(1, 2, 0))*255
+            # t = cv2.cvtColor(np.array(t, dtype=np.uint8), cv2.COLOR_RGB2HSV)
+            # t[:, :, 2] = cv2.equalizeHist(t[:, :, 2])
+            # t = cv2.cvtColor(t, cv2.COLOR_HSV2RGB)
             img[row*size+(row+1)*interval:(row+1)*size+(row+1)*interval,
-                col*size+(col+1)*interval:(col+1)*size+(col+1)*interval, ] = \
-                np.vectorize(clip_img)(imgs[counter, ]).transpose(1, 2, 0)*255
+                col*size+(col+1)*interval:(col+1)*size+(col+1)*interval, ] = t
             counter += 1
 
     cv2.imwrite("gen_%dx64.jpg" % i, img)

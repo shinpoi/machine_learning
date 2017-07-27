@@ -1,6 +1,8 @@
 # data
 data*
 CIFAR*
+konachan
+
 log
 *.npy
 *.npz

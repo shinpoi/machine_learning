@@ -108,6 +108,7 @@ class Discriminator(Chain):
 
 #################################################################
 # CIFAR-10
+# RAND_IN_NUM = 400
 class GeneratorCIFAR(Chain):
 
     def __init__(self):
@@ -141,14 +142,14 @@ class DiscriminatorCIFAR(Chain):
             c2=L.Convolution2D(128, 256, 4, stride=2, pad=1),  # 4x4x256
             c3=L.Convolution2D(256, 512, 4, stride=2, pad=1),  # 2x2x512
             l4l=L.Linear(2 * 2 * 512, 2),
-            # bn0=L.BatchNormalization(64),
+            bn0=L.BatchNormalization(64),
             bn1=L.BatchNormalization(128),
             bn2=L.BatchNormalization(256),
             bn3=L.BatchNormalization(512),
         )
 
     def __call__(self, x):
-        h = F.relu(self.c0(x))
+        h = F.relu(self.bn0(self.c0(x)))
         h = F.relu(self.bn1(self.c1(h)))
         h = F.relu(self.bn2(self.c2(h)))
         h = F.relu(self.bn3(self.c3(h)))
@@ -182,7 +183,7 @@ class GeneratorMnist(Chain):
 class DiscriminatorMnist(Chain):
     def __init__(self):
         super(DiscriminatorMnist, self).__init__(
-            c0=L.Convolution2D(1, 64, 4, stride=2, pad=1),  # 14x14x64
+            c0=L.Convolution2D(1, 64, 4, stride=2, pad=1, nobias=True),  # 14x14x64
             c1=L.Convolution2D(64, 128, 4, stride=2, pad=1),  # 7x7x128
             c2=L.Convolution2D(128, 256, 3, stride=2, pad=1),  # 4x4x256
             l4l=L.Linear(4 * 4 * 256, 2),
@@ -197,3 +198,100 @@ class DiscriminatorMnist(Chain):
         h = F.elu(self.bn3(self.c2(h)))
         h = self.l4l(h)
         return h
+
+"""
+# Face old
+#################################################################
+class GeneratorFace(Chain):
+    def __init__(self):
+        super(GeneratorFace, self).__init__(
+            l0z=L.Linear(input_num, 6 * 6 * 512),
+            dc1=L.Deconvolution2D(512, 256, 4, stride=2, pad=1),  # 12
+            dc2=L.Deconvolution2D(256, 128, 4, stride=2, pad=1),  # 24
+            dc3=L.Deconvolution2D(128, 64, 4, stride=2, pad=1),   # 48
+            dc4=L.Deconvolution2D(64, 3, 4, stride=2, pad=1),     # 96
+            bn0l=L.BatchNormalization(6 * 6 * 512),
+            bn0=L.BatchNormalization(512),
+            bn1=L.BatchNormalization(256),
+            bn2=L.BatchNormalization(128),
+            bn3=L.BatchNormalization(64),
+        )
+
+    def __call__(self, x):
+        h = F.reshape(F.relu(self.bn0l(self.l0z(x))), (x.shape[0], 512, 6, 6))
+        h = F.relu(self.bn1(self.dc1(h)))
+        h = F.relu(self.bn2(self.dc2(h)))
+        h = F.relu(self.bn3(self.dc3(h)))
+        g = self.dc4(h)
+        return g
+
+
+class DiscriminatorFace(Chain):
+    def __init__(self):
+        super(DiscriminatorFace, self).__init__(
+            c0=L.Convolution2D(3, 64, 4, stride=2, pad=1),     # 48
+            c1=L.Convolution2D(64, 128, 4, stride=2, pad=1),   # 24
+            c2=L.Convolution2D(128, 256, 4, stride=2, pad=1),  # 12
+            c3=L.Convolution2D(256, 512, 4, stride=2, pad=1),  # 6
+            l4l=L.Linear(6 * 6 * 512, 2),
+            # bn0=L.BatchNormalization(64),
+            bn1=L.BatchNormalization(128),
+            bn2=L.BatchNormalization(256),
+            bn3=L.BatchNormalization(512),
+        )
+
+    def __call__(self, x):
+        h = F.elu(self.c0(x))
+        h = F.elu(self.bn1(self.c1(h)))
+        h = F.elu(self.bn2(self.c2(h)))
+        h = F.elu(self.bn3(self.c3(h)))
+        d = self.l4l(h)
+        return d
+"""
+
+
+class GeneratorFace(Chain):
+    def __init__(self):
+        super(GeneratorFace, self).__init__(
+            l0z=L.Linear(input_num, 6 * 6 * 512, nobias=True),
+            dc1=L.Deconvolution2D(512, 256, 4, stride=2, pad=1, nobias=True),  # 12
+            dc2=L.Deconvolution2D(256, 128, 4, stride=2, pad=1),  # 24
+            dc3=L.Deconvolution2D(128, 64, 4, stride=2, pad=1),   # 48
+            dc4=L.Deconvolution2D(64, 3, 4, stride=2, pad=1),     # 96
+            bn0l=L.BatchNormalization(6 * 6 * 512),
+            bn0=L.BatchNormalization(512),
+            bn1=L.BatchNormalization(256),
+            bn2=L.BatchNormalization(128),
+            bn3=L.BatchNormalization(64),
+        )
+
+    def __call__(self, x):
+        h = F.reshape(F.relu(self.bn0l(self.l0z(x))), (x.shape[0], 512, 6, 6))
+        h = F.relu(self.bn1(self.dc1(h)))
+        h = F.relu(self.bn2(self.dc2(h)))
+        h = F.relu(self.bn3(self.dc3(h)))
+        g = self.dc4(h)
+        return g
+
+
+class DiscriminatorFace(Chain):
+    def __init__(self):
+        super(DiscriminatorFace, self).__init__(
+            c0=L.Convolution2D(3, 64, 4, stride=2, pad=1, nobias=True),     # 48
+            c1=L.Convolution2D(64, 128, 4, stride=2, pad=1),   # 24
+            c2=L.Convolution2D(128, 256, 4, stride=2, pad=1),  # 12
+            c3=L.Convolution2D(256, 512, 4, stride=2, pad=1),  # 6
+            l4l=L.Linear(6 * 6 * 512, 2),
+            # bn0=L.BatchNormalization(64),
+            bn1=L.BatchNormalization(128),
+            bn2=L.BatchNormalization(256),
+            bn3=L.BatchNormalization(512),
+        )
+
+    def __call__(self, x):
+        h = F.relu(self.c0(x))
+        h = F.relu(self.bn1(self.c1(h)))
+        h = F.relu(self.bn2(self.c2(h)))
+        h = F.relu(self.bn3(self.c3(h)))
+        d = self.l4l(h)
+        return d

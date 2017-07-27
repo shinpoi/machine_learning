@@ -20,7 +20,8 @@ logging.info("start import dataset...")
 batch_num = setting.BATCH
 input_num = setting.RAND_IN_NUM
 
-data_set = np.array(np.load('./CIFAR-10/CIFAR-10.npy'), dtype=np.float32)
+data_set = np.array(np.load('./data_face.npy'), dtype=np.float32)
+data_set = data_set[:len(data_set) - (len(data_set) % batch_num)]
 data_set /= 255.0
 n = len(data_set)
 logging.info("get %d true data for training..." % n)
@@ -31,8 +32,8 @@ logging.info("get %d true data for training..." % n)
 # load model
 logging.info("start load model...")
 
-gen = model.GeneratorCIFAR()
-dis = model.DiscriminatorCIFAR()
+gen = model.GeneratorFace()
+dis = model.DiscriminatorFace()
 
 opt_gen = optimizers.Adam(alpha=setting.ADAM_RATE)
 opt_gen.setup(gen)
@@ -74,7 +75,7 @@ for epoch in range(setting.EPOCH):
             continue
         """
 
-        x = xp.random.uniform(-1, 1, (batch_num, input_num))
+        x = xp.random.uniform(0, 1, (batch_num, input_num))
         x = Variable(xp.array(x, dtype=np.float32))
         # print('x.shape:', x.shape)
 
@@ -123,8 +124,8 @@ for epoch in range(setting.EPOCH):
 
     # middle save
     if setting.SAVE_MODEL:
-        if epoch % 100 == 0:
-            serializers.save_npz('model_gen_%sx100.npz' % str(int(epoch/100)), gen)
+        if epoch % 50 == 0:
+            serializers.save_npz('model_gen_%sx50.npz' % str(int(epoch/50)), gen)
             logging.info('Model Saved')
 
 logging.info("end training !")

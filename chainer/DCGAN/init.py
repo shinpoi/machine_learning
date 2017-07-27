@@ -40,9 +40,7 @@ def create_data_set(dir, size):
         logging.debug("read img: %d/%d" % (i, n))
         img = cv2.imread(dir + img_list[i])
         img = cut(img, size=size)
-        data_set[i, 0] = img[:, :, 0]
-        data_set[i, 1] = img[:, :, 1]
-        data_set[i, 2] = img[:, :, 2]
+        data_set[i, ] = img.transpose(1, 2, 0)
     logging.info("end create data set !")
     return data_set
 

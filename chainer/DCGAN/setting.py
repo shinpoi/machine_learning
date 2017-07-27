@@ -7,15 +7,16 @@ import time
 
 GPU = True
 ADAM_RATE = 0.0002
-WeightDecay = 0.00001
-# WeightDecay = None
+WeightDecay = None
+# WeightDecay = 0.00001
 SAVE_MODEL = True
 
 RAND_IN_NUM = 100
-EPOCH = 2000
-BATCH = 50
+# RAND_IN_NUM = 400
+EPOCH = 3000
+BATCH = 100
 
-IMG_SIZE = 32
+IMG_SIZE = 96
 DATA_DIR = './data/'
 LOG_DIR = './log/'
 LOG_NAME = LOG_DIR + 'log_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.log'

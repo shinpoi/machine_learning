@@ -64,7 +64,7 @@ for i in range(test_num):
 """
 x = np.random.uniform(0, 1, (64, input_num))
 x = Variable(np.array(x, dtype=np.float32))
-for i in range(7):
+for i in range(27):
     serializers.load_npz('./model_gen_%dx50.npz' % i, generator)
     logging.info('generate images (big)...')
     img = np.zeros((size*8 + interval*9, size*8 + interval*9, channel), dtype=np.uint8)

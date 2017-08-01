@@ -14,9 +14,15 @@ SAVE_MODEL = True
 RAND_IN_NUM = 100
 # RAND_IN_NUM = 400
 EPOCH = 3000
-BATCH = 100
+BATCH = 50
 
-IMG_SIZE = 96
+# completion network
+TC = 800
+TD = 200
+TT = 5000
+
+IMG_SIZE = 400
+CHANNEL = 1
 DATA_DIR = './data/'
 LOG_DIR = './log/'
 LOG_NAME = LOG_DIR + 'log_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.log'

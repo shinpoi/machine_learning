@@ -295,3 +295,121 @@ class DiscriminatorFace(Chain):
         h = F.relu(self.bn3(self.c3(h)))
         d = self.l4l(h)
         return d
+
+
+class CompletionNet(Chain):
+    def __init__(self):
+        super(CompletionNet, self).__init__(
+            c0a=L.Convolution2D(2, 64, 5, stride=1, pad=2),
+            c1a=L.Convolution2D(64, 128, 3, 2, 1),      # 1/2
+            c1b=L.Convolution2D(128, 128, 1, 1, 1),
+            c2a=L.Convolution2D(128, 256, 3, 2, 1),     # 1/4
+            c2b=L.Convolution2D(256, 256, 3, 1, 1),
+            c2c=L.Convolution2D(256, 256, 3, 1, 1),
+            dlc2a=L.DilatedConvolution2D(256, 256, 3, stride=1, pad=2, dilate=2),
+            dlc2b=L.DilatedConvolution2D(256, 256, 3, stride=1, pad=4, dilate=4),
+            dlc2c=L.DilatedConvolution2D(256, 256, 3, stride=1, pad=8, dilate=8),
+            dlc2d=L.DilatedConvolution2D(256, 256, 3, stride=1, pad=16, dilate=16),
+            c2d=L.Convolution2D(256, 256, 3, 1, 1),
+            c2e=L.Convolution2D(256, 256, 3, 1, 1),
+            dc3a=L.Deconvolution2D(256, 128, 4, 2, 1),  # 1/2
+            c3a=L.Convolution2D(128, 128, 3, 1, 1),
+            dc4a=L.Deconvolution2D(128, 64, 4, 2, 1),  # 1
+            c4a=L.Convolution2D(64, 32, 3, 1, 1),
+            c4b=L.Convolution2D(32, 1, 3, 1, 1),
+
+            bn0a=L.BatchNormalization(64),
+            bn1a=L.BatchNormalization(128),
+            bn1b=L.BatchNormalization(128),
+            bn2a=L.BatchNormalization(256),
+            bn2b=L.BatchNormalization(256),
+            bn2c=L.BatchNormalization(256),
+            bn2da=L.BatchNormalization(256),
+            bn2db=L.BatchNormalization(256),
+            bn2dc=L.BatchNormalization(256),
+            bn2dd=L.BatchNormalization(256),
+            bn2d=L.BatchNormalization(256),
+            bn2e=L.BatchNormalization(256),
+            bn3a=L.BatchNormalization(128),
+            bn3b=L.BatchNormalization(128),
+            bn4a=L.BatchNormalization(64),
+            bn4b=L.BatchNormalization(32),
+        )
+
+    def __call__(self, x):
+        h = F.relu(self.bn0a(self.c0a(x)))
+        h = F.relu(self.bn1a(self.c1a(h)))
+        h = F.relu(self.bn1b(self.c1b(h)))
+        h = F.relu(self.bn2a(self.c2a(h)))
+        h = F.relu(self.bn2b(self.c2b(h)))
+        h = F.relu(self.bn2c(self.c2c(h)))
+        h = F.relu(self.bn2da(self.dlc2a(h)))
+        h = F.relu(self.bn2db(self.dlc2b(h)))
+        h = F.relu(self.bn2dc(self.dlc2c(h)))
+        h = F.relu(self.bn2dd(self.dlc2d(h)))
+        h = F.relu(self.bn2d(self.c2d(h)))
+        h = F.relu(self.bn2e(self.c2e(h)))
+        h = F.relu(self.bn3a(self.dc3a(h)))
+        h = F.relu(self.bn3b(self.c3b(h)))
+        h = F.relu(self.bn4a(self.dc4a(h)))
+        h = F.sigmoid(self.bn4b(self.c4b(h)))
+        return h
+
+
+class LGDiscriminator(Chain):
+    def __init__(self):
+        super(LGDiscriminator, self).__init__(
+            Lc0=L.Convolution2D(1, 64, 5, 2, 2),     # -> 64x64
+            Lc1=L.Convolution2D(64, 128, 5, 2, 2),   # -> 32x32
+            Lc2=L.Convolution2D(128, 256, 5, 2, 2),   # -> 16x16
+            Lc3=L.Convolution2D(256, 512, 5, 2, 2),   # -> 8x8
+            Lc4=L.Convolution2D(512, 512, 5, 2, 2),   # -> 4x4
+            Lfc=L.Linear(2 * 2 * 512, 1024),
+
+            Lbn0=L.BatchNormalization(64),
+            Lbn1=L.BatchNormalization(128),
+            Lbn2=L.BatchNormalization(256),
+            Lbn3=L.BatchNormalization(512),
+            Lbn4=L.BatchNormalization(512),
+
+            Gc0=L.Convolution2D(1, 64, 5, 2, 2),  # -> 128x128
+            Gc1=L.Convolution2D(64, 128, 5, 2, 2),  # -> 64x64
+            Gc2=L.Convolution2D(128, 256, 5, 2, 2),  # -> 32x32
+            Gc3=L.Convolution2D(256, 512, 5, 2, 2),  # -> 16x16
+            Gc4=L.Convolution2D(512, 512, 5, 2, 2),  # -> 8x8
+            Gc5=L.Convolution2D(512, 512, 5, 2, 2),  # -> 4x4
+            Gfc=L.Linear(2 * 2 * 512, 1024),
+
+            Gbn0=L.BatchNormalization(64),
+            Gbn1=L.BatchNormalization(128),
+            Gbn2=L.BatchNormalization(256),
+            Gbn3=L.BatchNormalization(512),
+            Gbn4=L.BatchNormalization(512),
+            Gbn5=L.BatchNormalization(512),
+
+            fc=L.Linear(2 * 2 * 512 * 2, 2)
+        )
+
+    def __call__(self, l, g):
+        hl = F.relu(self.Lbn0(self.Lc0(l)))
+        hl = F.relu(self.Lbn1(self.Lc1(hl)))
+        hl = F.relu(self.Lbn2(self.Lc2(hl)))
+        hl = F.relu(self.Lbn3(self.Lc3(hl)))
+        hl = F.relu(self.Lbn4(self.Lc4(hl)))
+        hl = F.relu(self.Lfc(hl))
+
+        hg = F.relu(self.Gbn0(self.Gc0(l)))
+        hg = F.relu(self.Gbn1(self.Gc1(hg)))
+        hg = F.relu(self.Gbn2(self.Gc2(hg)))
+        hg = F.relu(self.Gbn3(self.Gc3(hg)))
+        hg = F.relu(self.Gbn4(self.Gc4(hg)))
+        hg = F.relu(self.Gbn5(self.Gc5(hg)))
+        hg = F.relu(self.Lfc(hg))
+
+        h = F.sigmoid(self.fc(F.concat((hl, hg))))
+        return h
+
+
+
+
+

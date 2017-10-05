@@ -14,10 +14,10 @@ SAVE_MODEL = True
 RAND_IN_NUM = 100
 # RAND_IN_NUM = 400
 EPOCH = 3000
-BATCH = 50
+BATCH = 100
 
 # completion network
-TC = 800
+TC = 8000
 TD = 200
 TT = 5000
 

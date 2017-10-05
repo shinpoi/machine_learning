@@ -32,22 +32,22 @@ logging.info("get %d true data for training..." % n)
 logging.info("start load model...")
 
 com = model.CompletionNet()
-dis = model.LGDiscriminator()
+# dis = model.LGDiscriminator()
 
 opt_com = optimizers.Adam(alpha=setting.ADAM_RATE)
 opt_com.setup(com)
-opt_dis = optimizers.Adam(alpha=setting.ADAM_RATE)
-opt_dis.setup(dis)
+# opt_dis = optimizers.Adam(alpha=setting.ADAM_RATE)
+# opt_dis.setup(dis)
 if setting.WeightDecay:
     opt_com.add_hook(optimizer.WeightDecay(setting.WeightDecay))
-    opt_dis.add_hook(optimizer.WeightDecay(setting.WeightDecay))
+    # opt_dis.add_hook(optimizer.WeightDecay(setting.WeightDecay))
 
 # Use GPU
 if setting.GPU:
     gpu_device = 0
     cuda.get_device_from_id(gpu_device).use()
     com.to_gpu(gpu_device)
-    dis.to_gpu(gpu_device)
+    # dis.to_gpu(gpu_device)
     xp = cuda.cupy
     # data_set = xp.array(data_set)
     logging.info('GPU used')
@@ -93,13 +93,13 @@ for epoch in range(setting.TC):
         x_original = Variable(data_set_true[shuffle_index[start:(start + batch_size)], ])
         mask = Variable(x_mask[:, 0, ])
         x = Variable(x_mask)
-        print(x.shape)
-        c = com(x)*mask
+        c = com(x)  # *mask
         com.cleargrads()
 
-        loss = F.mean_squared_error(c, x_original)
-        sum_loss += loss
-        loss.backward()
+        # loss = F.mean_squared_error(c, x_original)
+        # sum_loss += loss
+        # loss.backward()
+        # opt_com.update()
 
     average_loss = sum_loss/batch_num
     logging.info("TC epoch %d: average loss = %f" % (epoch, average_loss))
@@ -122,7 +122,7 @@ logging.info("end training !")
 if setting.SAVE_MODEL:
     # serializers.save_npz('gpu_model.npz', model)
     com.to_cpu()
-    dis.to_cpu()
+    # dis.to_cpu()
     serializers.save_npz('model_gen.npz', com)
     serializers.save_npz('model_dis.npz', dis)
     logging.info('Model Saved')

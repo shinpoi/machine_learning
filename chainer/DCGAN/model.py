@@ -297,6 +297,8 @@ class DiscriminatorFace(Chain):
         return d
 
 
+###############################
+# Globally and Locally Consistent Image Completion
 class CompletionNet(Chain):
     def __init__(self):
         super(CompletionNet, self).__init__(
@@ -313,10 +315,10 @@ class CompletionNet(Chain):
             c2d=L.Convolution2D(256, 256, 3, 1, 1),
             c2e=L.Convolution2D(256, 256, 3, 1, 1),
             dc3a=L.Deconvolution2D(256, 128, 4, 2, 1),  # 1/2
-            c3a=L.Convolution2D(128, 128, 3, 1, 1),
+            c3b=L.Convolution2D(128, 128, 3, 1, 1),
             dc4a=L.Deconvolution2D(128, 64, 4, 2, 1),  # 1
-            c4a=L.Convolution2D(64, 32, 3, 1, 1),
-            c4b=L.Convolution2D(32, 1, 3, 1, 1),
+            c4b=L.Convolution2D(64, 32, 3, 1, 1),
+            c4c=L.Convolution2D(32, 1, 3, 1, 1),
 
             bn0a=L.BatchNormalization(64),
             bn1a=L.BatchNormalization(128),
@@ -352,7 +354,8 @@ class CompletionNet(Chain):
         h = F.relu(self.bn3a(self.dc3a(h)))
         h = F.relu(self.bn3b(self.c3b(h)))
         h = F.relu(self.bn4a(self.dc4a(h)))
-        h = F.sigmoid(self.bn4b(self.c4b(h)))
+        h = F.relu(self.bn4b(self.c4b(h)))
+        h = F.sigmoid(self.c4c(h))
         return h
 
 
@@ -410,6 +413,64 @@ class LGDiscriminator(Chain):
         return h
 
 
+###############################
+# temp
+# input: obstacle x8 + start x2 + end x2 + random x12 ==> para x24
+# input.shape = (n, 24)
+# output.shape = (n, 1, 2, 45)
+class GeneratorPath(Chain):
+    def __init__(self):
+        super(GeneratorPath, self).__init__(
+            l0=L.Linear(24, 45*32, nobias=True),
+            c1=L.Convolution2D(1, 64, (1, 4), (1, 2), pad=(0, 1), nobias=True),  # 45*8 x 64
+            c2=L.Convolution2D(64, 128, (1, 4), (1, 2), pad=(0, 1)),  # 45*4 x 128
+            c3=L.Convolution2D(128, 256, (1, 4), (1, 2), pad=(0, 1)),  # 45*2 x 128
+            dlc3a=L.DilatedConvolution2D(256, 256, (1, 3), (1, 1), (0, 2), 2),  # 45*2 x 256
+            dlc3b=L.DilatedConvolution2D(256, 256, (1, 3), (1, 1), (0, 4), 4),  # 45*2 x 256
+            dlc3c=L.DilatedConvolution2D(256, 256, (1, 3), (1, 1), (0, 8), 8),  # 45*2 x 256
+            c4=L.Convolution2D(256, 64, (1, 4), stride=(1, 2), pad=(0, 1)),  # 45*1 x 1
+            c4b=L.Convolution2D(64, 1, (1, 3), stride=(1, 1), pad=(0, 1)),  # 45*1 x 1
+
+            bn0=L.BatchNormalization(45*32),
+            bn1=L.BatchNormalization(64),
+            bn2=L.BatchNormalization(128),
+            bn3=L.BatchNormalization(256),
+            bn3a=L.BatchNormalization(256),
+            bn3b=L.BatchNormalization(256),
+            bn3c=L.BatchNormalization(256),
+            bn4=L.BatchNormalization(64),
+        )
+
+    def __call__(self, x):
+        h = F.reshape(F.relu(self.bn0(self.l0(x))), (x.shape[0], 1, 2, 45*16))
+        h = F.relu(self.bn1(self.c1(h)))
+        h = F.relu(self.bn2(self.c2(h)))
+        h = F.relu(self.bn3(self.c3(h)))
+        h = F.relu(self.bn3a(self.dlc3a(h)))
+        h = F.relu(self.bn3b(self.dlc3b(h)))
+        h = F.relu(self.bn3c(self.dlc3c(h)))
+        h = F.relu(self.bn4(self.c4(h)))
+        h = F.relu(self.c4b(h))
+        return h
+
+
+class DiscriminatorPath(Chain):
+    def __init__(self):
+        super(DiscriminatorPath, self).__init__(
+            c0=L.Convolution2D(1, 64, 4, stride=2, pad=1, nobias=True),  # 14x14x64
+            c1=L.Convolution2D(64, 128, 4, stride=2, pad=1),  # 7x7x128
+            c2=L.Convolution2D(128, 256, 3, stride=2, pad=1),  # 4x4x256
+            l4l=L.Linear(4 * 4 * 256, 2),
+            bn2=L.BatchNormalization(128),
+            bn3=L.BatchNormalization(256),
+        )
+
+    def __call__(self, x):
+        h = F.relu(self.c0(x))
+        h = F.relu(self.bn2(self.c1(h)))
+        h = F.relu(self.bn3(self.c2(h)))
+        h = self.l4l(h)
+        return h
 
 
 

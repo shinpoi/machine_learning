@@ -20,7 +20,7 @@ logging.info("start import dataset...")
 batch_num = setting.BATCH
 input_num = setting.RAND_IN_NUM
 
-data_set = np.array(np.load('./data_face.npy'), dtype=np.float32)
+data_set = np.array(np.load('./dataset/data_face.npy'), dtype=np.float32)
 data_set = data_set[:len(data_set) - (len(data_set) % batch_num)]
 data_set /= 255.0
 n = len(data_set)

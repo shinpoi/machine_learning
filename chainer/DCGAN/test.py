@@ -69,7 +69,8 @@ for i in range(27):
     logging.info('generate images (big)...')
     img = np.zeros((size*8 + interval*9, size*8 + interval*9, channel), dtype=np.uint8)
     with using_config('train', False):
-        imgs = np.array(generator(x).data)
+        with no_backprop_mode():
+            imgs = np.array(generator(x).data)
 
     counter = 0
     for row in range(8):

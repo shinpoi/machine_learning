@@ -33,6 +33,7 @@ def load_data(filename):
         if word not in vocab:
             vocab[word] = len(vocab)
         data_set[i] = vocab[word]
+    # list --> Arr[<NO. of word>, ..., ..., ..., .....]
     return data_set
 
 
@@ -42,20 +43,23 @@ class MyRNN(Chain):
         super(MyRNN, self).__init__(
             embed=L.EmbedID(v, k),
             H=L.Linear(k, k),
-            W=L.Linear(k, v)
+            W=L.Linear(k, v),
         )
 
     def __call__(self, s):
-        accum_loss = None
+        accum_loss = 0
         v, k = self.embed.W.data.shape
         h = Variable(xp.zeros((1, k), dtype=np.float32))
         for i in range(len(s)):
-            next_word_id = eos_id if (i == len(s) - 1) else s[i+1]
+            try:
+                next_word_id = s[i+1]
+            except IndexError:
+                next_word_id = eos_id
             tx = Variable(xp.array([next_word_id], dtype=np.int32))
             x_k = self.embed(Variable(xp.array([s[i]], dtype=np.int32)))
             h = F.tanh(x_k + self.H(h))
             loss = F.softmax_cross_entropy(self.W(h), tx)
-            accum_loss = loss if accum_loss is None else accum_loss + loss
+            accum_loss += loss
         return accum_loss
 
     def output(self, s):
@@ -79,6 +83,19 @@ logging.info('Load training data ...')
 train_data = load_data("src/ptb.train.txt")
 eos_id = vocab['<eos>']
 
+sentence = [[], ]
+n = 0
+for i in range(len(train_data)):
+    id_ = train_data[i]
+    sentence[n].append(id_)
+    if id_ == eos_id:
+        n += 1
+        sentence.append([])
+
+sentence = sentence[:-1]
+n += -1
+print("get %d sentence" % n)
+
 # load model
 demb = 100
 model = MyRNN(len(vocab), demb)
@@ -94,24 +111,18 @@ if GPU:
 
 
 # training
-logging.info('Training start')
+logging.info('training start')
 for epoch in range(5):
-    logging.info('Gpoch %d' % epoch)
-    s = []
-    num_words = len(train_data)
-    for i in range(num_words):
-        if i % 10000 == 0:
-            logging.debug('word %d / %d' % (i, num_words))
-        id_ = train_data[i]
-        s.append(id_)
-        if id_ == eos_id:
-            model.cleargrads()
-            loss = model(np.array(s))
-            loss.backward()
-            optimizer.update()
-            s = []
-    serializers.save_npz("cpu_model_07.npz", model)
-
+    logging.info('Epoch %d' % epoch)
+    for i in range(n):
+        if i % 500 == 0:
+            logging.debug('sentence %d / %d' % (i, n))
+        model.cleargrads()
+        loss = model(xp.array(sentence[i]))
+        loss.backward()
+        optimizer.update()
+        
+serializers.save_npz("cpu_model_07.npz", model)
 logging.info('Training finished')
 
 # eval

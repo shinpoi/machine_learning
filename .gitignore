@@ -8,3 +8,7 @@ __pycache__
 *.tar
 *.csv
 *.npz
+
+# script and text
+*.log
+*.sh
